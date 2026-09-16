@@ -16,9 +16,9 @@ resource "aws_iam_role" "terraform_plan" {
   tags = var.tags
 }
 
-resource "aws_iam_role_policy_attachment" "terraform_plan_view_only" {
+resource "aws_iam_role_policy_attachment" "terraform_plan_read_only" {
   role       = aws_iam_role.terraform_plan.name
-  policy_arn = "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
+  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 }
 
 data "aws_iam_policy_document" "terraform_plan_assume_terraform_state" {
