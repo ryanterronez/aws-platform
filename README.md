@@ -1,32 +1,26 @@
 # AWS Platform
 
-Terraform foundation for AWS resources managed through GitHub Actions using
-OpenID Connect (OIDC). No long-lived AWS access keys are required in GitHub.
+The existing platform root manages the Terraform backend and GitHub OIDC roles.
+Its PR workflow is unchanged.
 
-## Prerequisites
+The management account is for organization governance and account creation.
+The Areopagus member account is for the future application.
 
-- Terraform 1.6 or later
-- An AWS account and permissions to create IAM OIDC providers and roles
-- A GitHub repository
+`organization-governance/` reads the existing Organization and manages the Workloads
+OU, Areopagus account, two SCPs, and S3/EC2 declarative policies attached to Workloads.
+Apply it separately using your management-account Identity Center administrator
+session and its own state key in the existing bucket.
 
-## Configure
+Set `workload_account_email` in local `terraform.tfvars`; configure the backend from
+`backend.hcl.example`. Enable SCP, EC2 declarative, and S3 policy types first.
+Set `existing_account_departure_protection_policy_id` only if equivalent protection
+is already effective. Accounts, OUs, and policies are protected from destruction.
 
-Provide the GitHub organization or user that owns the `aws-platform`
-repository. The OIDC role can be assumed only from its `main` branch:
-
-```hcl
-github_organization = "your-github-organization"
-terraform_state_bucket_name = "areopagus-terraform-state"
+```cmd
+set AWS_PROFILE=admin
+terraform -chdir=organization-governance init -reconfigure -backend-config=backend.hcl
+terraform -chdir=organization-governance plan
+terraform -chdir=organization-governance apply
 ```
 
-Save those values in a local `terraform.tfvars` file (ignored by Git) or pass
-them with `-var`.
-
-```sh
-terraform init
-terraform plan
-terraform apply
-```
-
-After apply, configure GitHub Actions to request `id-token: write` and assume
-the `github_actions_role_arn` output.
+Normal platform CI cannot access governance state.
