@@ -82,3 +82,4 @@ jobs:
         with:
           directory: .
           framework: terraform
+          config_file: .checkov.yaml
