@@ -23,7 +23,10 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_organization}/aws-platform:ref:refs/heads/main"]
+      values = [
+        "repo:${var.github_organization}/aws-platform:ref:refs/heads/main",
+        "repo:${var.github_organization}/aws-platform:pull_request",
+      ]
     }
   }
 }
