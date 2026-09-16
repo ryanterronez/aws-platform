@@ -16,6 +16,7 @@ repository. The OIDC role can be assumed only from its `main` branch:
 
 ```hcl
 github_organization = "your-github-organization"
+terraform_state_bucket_name = "areopagus-terraform-state"
 ```
 
 Save those values in a local `terraform.tfvars` file (ignored by Git) or pass
