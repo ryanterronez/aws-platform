@@ -48,33 +48,6 @@ jobs:
       - name: Check Terraform formatting
         run: terraform fmt -check
 
-      - name: Display GitHub OIDC token claims
-        shell: bash
-        run: |
-          oidc_token="$(curl --fail-with-body --silent --show-error \
-            --header "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" \
-            | jq --raw-output '.value')"
-
-          OIDC_TOKEN="$oidc_token" node <<'NODE'
-          const claims = JSON.parse(
-            Buffer.from(process.env.OIDC_TOKEN.split(".")[1], "base64url").toString("utf8"),
-          );
-          const allowedClaims = [
-            "sub",
-            "aud",
-            "repository",
-            "repository_id",
-            "repository_owner",
-            "repository_owner_id",
-          ];
-          console.log(JSON.stringify(
-            Object.fromEntries(allowedClaims.map((claim) => [claim, claims[claim]])),
-            null,
-            2,
-          ));
-          NODE
-
       - name: Authenticate to AWS
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
