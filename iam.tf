@@ -9,14 +9,65 @@ resource "aws_iam_role" "github_actions" {
   tags = var.tags
 }
 
+resource "aws_iam_role" "terraform_plan" {
+  name               = "terraform-plan"
+  assume_role_policy = data.aws_iam_policy_document.terraform_plan_assume_role.json
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "terraform_plan_view_only" {
+  role       = aws_iam_role.terraform_plan.name
+  policy_arn = "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
+}
+
+data "aws_iam_policy_document" "terraform_plan_assume_terraform_state" {
+  statement {
+    effect    = "Allow"
+    actions   = ["sts:AssumeRole"]
+    resources = [aws_iam_role.terraform_state.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "terraform_plan_assume_terraform_state" {
+  name   = "assume-terraform-state-role"
+  role   = aws_iam_role.terraform_plan.id
+  policy = data.aws_iam_policy_document.terraform_plan_assume_terraform_state.json
+}
+
+resource "aws_iam_role" "terraform_apply" {
+  name               = "terraform-apply"
+  assume_role_policy = data.aws_iam_policy_document.terraform_apply_assume_role.json
+
+  tags = var.tags
+}
+
+data "aws_iam_policy_document" "terraform_apply_assume_terraform_state" {
+  statement {
+    effect    = "Allow"
+    actions   = ["sts:AssumeRole"]
+    resources = [aws_iam_role.terraform_state.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "terraform_apply_assume_terraform_state" {
+  name   = "assume-terraform-state-role"
+  role   = aws_iam_role.terraform_apply.id
+  policy = data.aws_iam_policy_document.terraform_apply_assume_terraform_state.json
+}
+
 data "aws_iam_policy_document" "terraform_state_assume_role" {
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRole"]
 
     principals {
-      type        = "AWS"
-      identifiers = [aws_iam_role.github_actions.arn]
+      type = "AWS"
+      identifiers = [
+        aws_iam_role.github_actions.arn,
+        aws_iam_role.terraform_plan.arn,
+        aws_iam_role.terraform_apply.arn,
+      ]
     }
   }
 
@@ -92,49 +143,4 @@ resource "aws_iam_role_policy" "github_actions_assume_terraform_state" {
   name   = "assume-terraform-state-role"
   role   = aws_iam_role.github_actions.id
   policy = data.aws_iam_policy_document.github_actions_assume_terraform_state.json
-}
-
-data "aws_iam_policy_document" "github_actions_plan_read" {
-  statement {
-    sid = "ReadTerraformStateBucket"
-
-    actions = [
-      "s3:GetBucketAcl",
-      "s3:GetBucketLocation",
-      "s3:GetBucketOwnershipControls",
-      "s3:GetBucketPolicy",
-      "s3:GetBucketPolicyStatus",
-      "s3:GetBucketPublicAccessBlock",
-      "s3:GetBucketTagging",
-      "s3:GetBucketVersioning",
-      "s3:GetEncryptionConfiguration",
-      "s3:ListBucket",
-    ]
-
-    resources = [aws_s3_bucket.terraform_state.arn]
-  }
-
-  statement {
-    sid       = "ReadManagedIamRoles"
-    actions   = ["iam:GetRole"]
-    resources = [aws_iam_role.github_actions.arn, aws_iam_role.terraform_state.arn]
-  }
-
-  statement {
-    sid       = "ReadManagedInlineRolePolicies"
-    actions   = ["iam:GetRolePolicy"]
-    resources = [aws_iam_role.github_actions.arn, aws_iam_role.terraform_state.arn]
-  }
-
-  statement {
-    sid       = "ReadGitHubOidcProvider"
-    actions   = ["iam:GetOpenIDConnectProvider"]
-    resources = [aws_iam_openid_connect_provider.github_actions.arn]
-  }
-}
-
-resource "aws_iam_role_policy" "github_actions_plan_read" {
-  name   = "terraform-plan-read"
-  role   = aws_iam_role.github_actions.id
-  policy = data.aws_iam_policy_document.github_actions_plan_read.json
 }

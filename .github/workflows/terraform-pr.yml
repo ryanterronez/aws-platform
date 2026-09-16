@@ -56,7 +56,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           aws-region: us-east-2
-          role-to-assume: arn:aws:iam::503353372972:role/github-actions-oidc
+          role-to-assume: arn:aws:iam::503353372972:role/terraform-plan
           role-session-name: github-actions-terraform-pr-${{ github.run_id }}
 
       - name: Initialize Terraform
