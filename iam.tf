@@ -100,6 +100,14 @@ resource "aws_iam_role" "terraform_state" {
 }
 
 data "aws_iam_policy_document" "terraform_state_access" {
+  # Keep governance state inaccessible to workload CI.
+  statement {
+    sid       = "DenyGovernanceStateAccess"
+    effect    = "Deny"
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+    resources = ["${aws_s3_bucket.terraform_state.arn}/aws-platform/organization-governance/*"]
+  }
+
   statement {
     effect = "Allow"
     actions = [
