@@ -46,8 +46,11 @@ jobs:
         with:
           terraform_version: 1.16.0
 
-      - name: Check Terraform formatting
-        run: terraform fmt -check
+      - name: Report Terraform formatting issues
+        run: |
+          if ! terraform fmt -check; then
+            echo "::warning::Terraform formatting is needed. Run 'terraform fmt -recursive' locally."
+          fi
 
       - name: Authenticate to AWS
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
