@@ -42,6 +42,11 @@ resource "aws_iam_role" "terraform_apply" {
   tags = var.tags
 }
 
+resource "aws_iam_role_policy_attachment" "terraform_apply_administrator_access" {
+  role       = aws_iam_role.terraform_apply.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+
 data "aws_iam_policy_document" "terraform_apply_assume_terraform_state" {
   statement {
     effect    = "Allow"
