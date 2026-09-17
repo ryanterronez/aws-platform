@@ -24,3 +24,7 @@ terraform -chdir=organization-governance apply
 ```
 
 Normal platform CI cannot access governance state.
+
+aws sso login --profile admin
+
+set AWS_PROFILE=admin
