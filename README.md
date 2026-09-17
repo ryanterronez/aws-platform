@@ -35,6 +35,60 @@ terraform -chdir=organization-governance apply
 
 Normal platform CI cannot access governance state.
 
+## Areopagus workload deployment foundation
+
+The root stack also creates the minimum cross-account foundation for the
+separate `ryanterronez/areopagus` application repository. Set
+`areopagus_workload_account_id` to the `workload_account_id` output from the
+governance stack before planning or applying this root stack. This is a
+non-secret local input and must refer to the workload account after the
+governance stack has created it.
+
+During bootstrap, the platform administrator assumes the Organization-created
+`OrganizationAccountAccessRole` in that workload account to create its GitHub
+OIDC provider and `areopagus-github-actions-deployment` role. This temporary
+bootstrap path is usable only by the platform administrator; GitHub Actions
+does not trust or assume `OrganizationAccountAccessRole`.
+
+The deployment role trusts exactly this customized immutable GitHub subject and
+the `sts.amazonaws.com` audience:
+
+```text
+repo:ryanterronez@48932656/areopagus@1373118440:ref:refs/heads/main
+```
+
+It trusts no pull requests, tags, other branches, forks, wildcard repositories,
+or mutable repository-name-only subjects. Do not configure a GitHub Environment
+for this workflow unless its environment-form OIDC subject is also explicitly
+trusted; the role currently accepts only the branch subject above. Consequently,
+only workflow runs for changes merged to `main` are eligible to deploy.
+
+Terraform state for the application uses the `areopagus/*` key convention in
+`areopagus-terraform-state` (for example, `areopagus/terraform.tfstate` and its
+S3 lockfile). The deployment role can only assume the separate
+`areopagus-terraform-state-access` role; that role can list and read/write only
+the `areopagus/*` prefix. It has no access to `aws-platform/*`, including the
+governance prefix. Bucket encryption, versioning, public-access blocking,
+lockfile permissions, and the deny-insecure-transport policy remain shared
+controls managed by this stack.
+
+The deployment role intentionally starts without AWS application-resource
+permissions. When the Areopagus Terraform configuration is introduced, extend
+its inline policy with only the actions and resource ARNs required by those
+declared resources. Do not attach administrative access.
+
+The future Areopagus workflow must still configure:
+
+- `permissions: id-token: write` and `contents: read`;
+- `aws-actions/configure-aws-credentials` with the
+  `areopagus_deployment_role_arn` output and `us-east-2`;
+- the S3 backend bucket/key/region from the Areopagus state outputs, with its
+  backend `assume_role` set to `areopagus_terraform_state_role_arn`; and
+- a trigger that runs the deployment job only after a merge to `main` (for
+  example, a `push` workflow restricted to `main`).
+
+No changes to the Areopagus repository are made by this stack.
+
 aws sso login --profile admin
 
 set AWS_PROFILE=admin
