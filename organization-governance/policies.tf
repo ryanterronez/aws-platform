@@ -59,6 +59,61 @@ resource "aws_organizations_policy_attachment" "scp_identity_guardrails" {
   target_id = aws_organizations_organizational_unit.workloads.id
 }
 
+data "aws_iam_policy_document" "service_allowlist" {
+  statement {
+    sid    = "DenyUnapprovedServices"
+    effect = "Deny"
+
+    not_actions = [
+      "apigateway:*",
+      "cloudtrail:*",
+      "cloudwatch:*",
+      "config:*",
+      "dynamodb:*",
+      "ecr:*",
+      "events:*",
+      "guardduty:*",
+      "iam:*",
+      "identitystore:*",
+      "kms:*",
+      "lambda:*",
+      "logs:*",
+      "organizations:*",
+      "s3:*",
+      "secretsmanager:*",
+      "securityhub:*",
+      "sns:*",
+      "sqs:*",
+      "ssm:*",
+      "sso:*",
+      "sso-admin:*",
+      "sso-directory:*",
+      "sso-oidc:*",
+      "states:*",
+      "sts:*",
+      "transcribe:*",
+    ]
+
+    resources = ["*"]
+  }
+}
+
+resource "aws_organizations_policy" "scp_service_allowlist" {
+  name        = "scp_service_allowlist"
+  description = "Denies all services except the Areopagus baseline service allowlist."
+  content     = data.aws_iam_policy_document.service_allowlist.json
+  type        = "SERVICE_CONTROL_POLICY"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_organizations_policy_attachment" "scp_service_allowlist" {
+  policy_id = aws_organizations_policy.scp_service_allowlist.id
+  target_id = aws_organizations_organizational_unit.workloads.id
+}
+
 resource "aws_organizations_policy" "organization_policy_ec2" {
   name        = "organization_policy_ec2"
   description = "Workload EC2 baseline: no new public AMI or snapshot sharing, IMDSv2 required, and serial console disabled."
