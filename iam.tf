@@ -35,6 +35,22 @@ resource "aws_iam_role_policy" "terraform_plan_assume_terraform_state" {
   policy = data.aws_iam_policy_document.terraform_plan_assume_terraform_state.json
 }
 
+data "aws_iam_policy_document" "terraform_plan_assume_areopagus_workload_bootstrap" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+    resources = [
+      "arn:${data.aws_partition.current.partition}:iam::${var.areopagus_workload_account_id}:role/${var.areopagus_workload_bootstrap_role_name}",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "terraform_plan_assume_areopagus_workload_bootstrap" {
+  name   = "assume-areopagus-workload-bootstrap-role"
+  role   = aws_iam_role.terraform_plan.id
+  policy = data.aws_iam_policy_document.terraform_plan_assume_areopagus_workload_bootstrap.json
+}
+
 data "aws_iam_policy_document" "terraform_state_assume_role" {
   statement {
     effect  = "Allow"

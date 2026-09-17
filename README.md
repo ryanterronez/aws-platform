@@ -44,6 +44,10 @@ governance stack before planning or applying this root stack. This is a
 non-secret local input and must refer to the workload account after the
 governance stack has created it.
 
+For the platform pull-request workflow, set the non-secret repository Actions
+variable `AREOPAGUS_WORKLOAD_ACCOUNT_ID` to that same 12-digit value. The
+workflow maps it to Terraform's `TF_VAR_areopagus_workload_account_id` input.
+
 During bootstrap, the platform administrator assumes the Organization-created
 `OrganizationAccountAccessRole` in that workload account to create its GitHub
 OIDC provider and `areopagus-github-actions-deployment` role. This temporary
