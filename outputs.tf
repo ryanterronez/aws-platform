@@ -5,7 +5,7 @@ output "github_actions_role_arn" {
 
 output "areopagus_deployment_role_arn" {
   description = "Workload-account IAM role ARN for Areopagus GitHub Actions to assume through OIDC."
-  value       = aws_iam_role.areopagus_deployment.arn
+  value       = local.areopagus_deployment_role_arn
 }
 
 output "areopagus_terraform_state_bucket_name" {

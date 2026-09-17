@@ -5,15 +5,9 @@ variable "aws_region" {
 }
 
 variable "areopagus_deployment_role_name" {
-  description = "Name of the workload-account role that Areopagus GitHub Actions assumes through OIDC."
+  description = "Name of the workload-account deployment role trusted by the platform state-access role."
   type        = string
   default     = "areopagus-github-actions-deployment"
-}
-
-variable "areopagus_github_oidc_subject" {
-  description = "Exact immutable GitHub OIDC subject trusted to deploy Areopagus from its main branch."
-  type        = string
-  default     = "repo:ryanterronez@48932656/areopagus@1373118440:ref:refs/heads/main"
 }
 
 variable "areopagus_terraform_state_key_prefix" {
@@ -32,12 +26,6 @@ variable "areopagus_workload_account_name" {
   description = "Unique active AWS Organizations account name for the Areopagus workload."
   type        = string
   default     = "Areopagus"
-}
-
-variable "areopagus_workload_bootstrap_role_name" {
-  description = "Name of the tightly scoped bootstrap role created by AWS Organizations in the Areopagus workload account."
-  type        = string
-  default     = "OrganizationAccountAccessRole"
 }
 
 variable "github_oidc_subject_repository" {

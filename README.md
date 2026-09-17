@@ -37,19 +37,28 @@ Normal platform CI cannot access governance state.
 
 ## Areopagus workload deployment foundation
 
-The root stack also creates the minimum cross-account foundation for the
-separate `ryanterronez/areopagus` application repository. It discovers the
-active Organization account named `Areopagus` automatically; no local Terraform
-input or GitHub repository variable is required. The lookup fails safely if no
-active account, or more than one active account, has that name. Change
-`areopagus_workload_account_name` only if the governance stack's workload
-account name is intentionally changed as well.
+The foundation is split along its privilege boundary:
 
-During bootstrap, the platform administrator assumes the Organization-created
-`OrganizationAccountAccessRole` in that workload account to create its GitHub
-OIDC provider and `areopagus-github-actions-deployment` role. This temporary
-bootstrap path is usable only by the platform administrator; GitHub Actions
-does not trust or assume `OrganizationAccountAccessRole`.
+- **Root (`./`)** creates `areopagus-terraform-state-access` in the platform
+  account. The ordinary pull-request plan workflow runs only against this root
+  stack and never assumes a workload-account administrator role.
+- **`areopagus-workload-foundation/`** is an administrator-only bootstrap stack.
+  It discovers the single active Organization account named `Areopagus`, assumes
+  its Organization-created `OrganizationAccountAccessRole`, and creates the
+  GitHub OIDC provider and deployment role. It has no GitHub Actions workflow.
+
+The administrator-only stack must use its own local ignored backend
+configuration at `areopagus-workload-foundation/backend.hcl`. Store its state
+under an `aws-platform/` key using the existing `terraform-state-access` role.
+Apply it first so its deployment role exists, then apply the root stack to
+create the state role that trusts it. The lookup fails safely if no active
+account, or more than one active account, has the name `Areopagus`. Change the
+same account-name variable in both stacks only if the governance workload
+account name is intentionally changed.
+
+`OrganizationAccountAccessRole` has administrative permissions and is usable
+only by the administrator bootstrap stack. GitHub Actions never trusts or
+assumes it.
 
 The deployment role trusts exactly this customized immutable GitHub subject and
 the `sts.amazonaws.com` audience:
