@@ -53,27 +53,3 @@ data "aws_iam_policy_document" "terraform_plan_assume_role" {
     }
   }
 }
-
-data "aws_iam_policy_document" "terraform_apply_assume_role" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:ryanterronez@48932656/aws-platform@1373146850:ref:refs/heads/main"]
-    }
-  }
-}

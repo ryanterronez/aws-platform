@@ -35,32 +35,6 @@ resource "aws_iam_role_policy" "terraform_plan_assume_terraform_state" {
   policy = data.aws_iam_policy_document.terraform_plan_assume_terraform_state.json
 }
 
-resource "aws_iam_role" "terraform_apply" {
-  name               = "terraform-apply"
-  assume_role_policy = data.aws_iam_policy_document.terraform_apply_assume_role.json
-
-  tags = var.tags
-}
-
-resource "aws_iam_role_policy_attachment" "terraform_apply_power_user" {
-  role       = aws_iam_role.terraform_apply.name
-  policy_arn = "arn:aws:iam::aws:policy/PowerUserAccess"
-}
-
-data "aws_iam_policy_document" "terraform_apply_assume_terraform_state" {
-  statement {
-    effect    = "Allow"
-    actions   = ["sts:AssumeRole"]
-    resources = [aws_iam_role.terraform_state.arn]
-  }
-}
-
-resource "aws_iam_role_policy" "terraform_apply_assume_terraform_state" {
-  name   = "assume-terraform-state-role"
-  role   = aws_iam_role.terraform_apply.id
-  policy = data.aws_iam_policy_document.terraform_apply_assume_terraform_state.json
-}
-
 data "aws_iam_policy_document" "terraform_state_assume_role" {
   statement {
     effect  = "Allow"
@@ -71,7 +45,6 @@ data "aws_iam_policy_document" "terraform_state_assume_role" {
       identifiers = [
         aws_iam_role.github_actions.arn,
         aws_iam_role.terraform_plan.arn,
-        aws_iam_role.terraform_apply.arn,
       ]
     }
   }
