@@ -28,14 +28,10 @@ variable "areopagus_terraform_state_role_name" {
   default     = "areopagus-terraform-state-access"
 }
 
-variable "areopagus_workload_account_id" {
-  description = "AWS account ID of the Organization-created Areopagus workload account."
+variable "areopagus_workload_account_name" {
+  description = "Unique active AWS Organizations account name for the Areopagus workload."
   type        = string
-
-  validation {
-    condition     = can(regex("^[0-9]{12}$", var.areopagus_workload_account_id))
-    error_message = "areopagus_workload_account_id must be a 12-digit AWS account ID."
-  }
+  default     = "Areopagus"
 }
 
 variable "areopagus_workload_bootstrap_role_name" {

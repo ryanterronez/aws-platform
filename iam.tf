@@ -40,7 +40,7 @@ data "aws_iam_policy_document" "terraform_plan_assume_areopagus_workload_bootstr
     effect  = "Allow"
     actions = ["sts:AssumeRole"]
     resources = [
-      "arn:${data.aws_partition.current.partition}:iam::${var.areopagus_workload_account_id}:role/${var.areopagus_workload_bootstrap_role_name}",
+      "arn:${data.aws_partition.current.partition}:iam::${local.areopagus_workload_account_id}:role/${var.areopagus_workload_bootstrap_role_name}",
     ]
   }
 }

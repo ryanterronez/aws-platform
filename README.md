@@ -38,15 +38,12 @@ Normal platform CI cannot access governance state.
 ## Areopagus workload deployment foundation
 
 The root stack also creates the minimum cross-account foundation for the
-separate `ryanterronez/areopagus` application repository. Set
-`areopagus_workload_account_id` to the `workload_account_id` output from the
-governance stack before planning or applying this root stack. This is a
-non-secret local input and must refer to the workload account after the
-governance stack has created it.
-
-For the platform pull-request workflow, set the non-secret repository Actions
-variable `AREOPAGUS_WORKLOAD_ACCOUNT_ID` to that same 12-digit value. The
-workflow maps it to Terraform's `TF_VAR_areopagus_workload_account_id` input.
+separate `ryanterronez/areopagus` application repository. It discovers the
+active Organization account named `Areopagus` automatically; no local Terraform
+input or GitHub repository variable is required. The lookup fails safely if no
+active account, or more than one active account, has that name. Change
+`areopagus_workload_account_name` only if the governance stack's workload
+account name is intentionally changed as well.
 
 During bootstrap, the platform administrator assumes the Organization-created
 `OrganizationAccountAccessRole` in that workload account to create its GitHub
