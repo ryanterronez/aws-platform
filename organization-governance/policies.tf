@@ -114,6 +114,54 @@ resource "aws_organizations_policy_attachment" "scp_service_allowlist" {
   target_id = aws_organizations_organizational_unit.workloads.id
 }
 
+data "aws_iam_policy_document" "resource_perimeter" {
+  statement {
+    sid    = "DenyAccessOutsideOrganization"
+    effect = "Deny"
+    actions = [
+      "dynamodb:*",
+      "ecr:*",
+      "events:*",
+      "kms:*",
+      "logs:*",
+      "s3:*",
+      "secretsmanager:*",
+      "sqs:*",
+      "sts:*",
+      "transcribe:*",
+    ]
+    resources = ["*"]
+
+    condition {
+      test     = "StringNotEquals"
+      variable = "aws:PrincipalOrgID"
+      values   = [data.aws_organizations_organization.current.id]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:PrincipalIsAWSService"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_organizations_policy" "rcp_resource_perimeter" {
+  name        = "rcp_resource_perimeter"
+  description = "Restricts supported workload resources to Organization principals and AWS services."
+  content     = data.aws_iam_policy_document.resource_perimeter.json
+  type        = "RESOURCE_CONTROL_POLICY"
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_organizations_policy_attachment" "rcp_resource_perimeter" {
+  policy_id = aws_organizations_policy.rcp_resource_perimeter.id
+  target_id = aws_organizations_organizational_unit.workloads.id
+}
+
 resource "aws_organizations_policy" "organization_policy_ec2" {
   name        = "organization_policy_ec2"
   description = "Workload EC2 baseline: no new public AMI or snapshot sharing, IMDSv2 required, and serial console disabled."

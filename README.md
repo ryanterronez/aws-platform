@@ -11,8 +11,8 @@ This repository has two independent Terraform stacks in `us-east-2`.
   AWS Organizations management-account administrator. It creates the
   `Workloads` OU and the Areopagus workload account, then attaches
   the baseline service-allowlist, account-departure, and IAM identity guardrail
-  SCPs, plus EC2 and S3 declarative policies. Its state is intentionally
-  inaccessible to normal platform CI.
+  SCPs; a resource-perimeter RCP; and EC2 and S3 declarative policies. Its
+  state is intentionally inaccessible to normal platform CI.
 
 The Organization stack enforces management-account execution. Accounts, OUs,
 and Organization policies are protected from destruction.
@@ -22,7 +22,7 @@ Apply changes to the platform root using the same administrator session:
 For the governance stack, set `workload_account_email` in local
 `terraform.tfvars` (never commit it), then configure its backend from
 the local ignored `organization-governance/backend.hcl`. Enable the SCP, EC2
-declarative, and S3 policy types before its first apply. Set
+declarative, S3, and RCP policy types before its first apply. Set
 `existing_account_departure_protection_policy_id` only when equivalent
 departure protection is already effective.
 
