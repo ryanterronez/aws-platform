@@ -1,31 +1,30 @@
 # AWS Platform
 
-The platform root is a bootstrap stack. It manages the Terraform backend and
-GitHub OIDC roles, and must be applied with an administrator session. Pull
-requests run read-only Terraform plans; they do not apply bootstrap changes.
+This repository has two independent Terraform stacks in `us-east-2`.
 
-The management account is for organization governance and account creation.
-The Areopagus member account is for the future application.
+- **Root (`./`) — platform bootstrap.** Creates and hardens the
+  `areopagus-terraform-state` S3 backend; GitHub Actions OIDC provider and
+  roles; and the `terraform-state-access` role. Bootstrap state is stored at
+  `aws-platform/terraform.tfstate`. Pull requests assume the read-only
+  `terraform-plan` role and cannot apply bootstrap changes.
+- **`organization-governance/` — organization governance.** Must run with an
+  AWS Organizations management-account administrator. It creates the
+  `Workloads` OU and the Areopagus workload account, then attaches
+  the baseline service-allowlist, account-departure, and IAM identity guardrail
+  SCPs, plus EC2 and S3 declarative policies. Its state is intentionally
+  inaccessible to normal platform CI.
 
-`organization-governance/` reads the existing Organization and manages the Workloads
-OU, Areopagus account, two SCPs, and S3/EC2 declarative policies attached to Workloads.
-Apply it separately using your management-account Identity Center administrator
-session and its own state key in the existing bucket.
+The Organization stack enforces management-account execution. Accounts, OUs,
+and Organization policies are protected from destruction.
 
 Apply changes to the platform root using the same administrator session:
 
-```cmd
-aws sso login --profile admin
-set AWS_PROFILE=admin
-terraform init -reconfigure
-terraform plan
-terraform apply
-```
-
-Set `workload_account_email` in local `terraform.tfvars`; configure the backend from
-`backend.hcl.example`. Enable SCP, EC2 declarative, and S3 policy types first.
-Set `existing_account_departure_protection_policy_id` only if equivalent protection
-is already effective. Accounts, OUs, and policies are protected from destruction.
+For the governance stack, set `workload_account_email` in local
+`terraform.tfvars` (never commit it), then configure its backend from
+the local ignored `organization-governance/backend.hcl`. Enable the SCP, EC2
+declarative, and S3 policy types before its first apply. Set
+`existing_account_departure_protection_policy_id` only when equivalent
+departure protection is already effective.
 
 ```cmd
 set AWS_PROFILE=admin
