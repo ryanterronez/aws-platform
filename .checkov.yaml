@@ -1,6 +1,13 @@
 skip-check:
+  # State bucket access logging needs a separate audit destination; it must not
+  # write logs to itself.
   - CKV_AWS_18
+  # Retain every state version until an explicit backup-retention policy exists.
   - CKV2_AWS_61
+  # State change notifications will be provided by the dedicated audit trail.
   - CKV2_AWS_62
+  # A single-region backend has no cross-region replication design yet.
   - CKV_AWS_144
+  # SSE-S3 is intentional until a customer-managed KMS key and key policy are
+  # introduced for the backend.
   - CKV_AWS_145
