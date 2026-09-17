@@ -23,8 +23,8 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:ryanterronez@48932656/aws-platform@1373146850:ref:refs/heads/main",
-        "repo:ryanterronez@48932656/aws-platform@1373146850:pull_request",
+        "${var.github_oidc_subject_repository}:ref:refs/heads/main",
+        "${var.github_oidc_subject_repository}:pull_request",
       ]
     }
   }
@@ -49,7 +49,7 @@ data "aws_iam_policy_document" "terraform_plan_assume_role" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:ryanterronez@48932656/aws-platform@1373146850:pull_request"]
+      values   = ["${var.github_oidc_subject_repository}:pull_request"]
     }
   }
 }

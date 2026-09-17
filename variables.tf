@@ -4,10 +4,15 @@ variable "aws_region" {
   default     = "us-east-2"
 }
 
-variable "github_organization" {
-  description = "GitHub organization or user that owns the allowed repository."
+variable "github_oidc_subject_repository" {
+  description = "Repository prefix in the customized GitHub OIDC subject, including immutable owner and repository IDs."
   type        = string
-  default     = "ryanterronez"
+  default     = "repo:ryanterronez@48932656/aws-platform@1373146850"
+
+  validation {
+    condition     = startswith(var.github_oidc_subject_repository, "repo:")
+    error_message = "github_oidc_subject_repository must start with repo:."
+  }
 }
 
 variable "github_actions_role_name" {
