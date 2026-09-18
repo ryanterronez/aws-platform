@@ -102,10 +102,24 @@ governance prefix. Bucket encryption, versioning, public-access blocking,
 lockfile permissions, and the deny-insecure-transport policy remain shared
 controls managed by this stack.
 
-The deployment role intentionally starts without AWS application-resource
-permissions. When the Areopagus Terraform configuration is introduced, extend
-its inline policy with only the actions and resource ARNs required by those
-declared resources. Do not attach administrative access.
+The deployment role can manage application resources permitted by the Workloads
+SCP service allowlist. Its customer-managed policy intentionally excludes IAM,
+Organizations, IAM Identity Center, and unrestricted STS; the SCP remains the
+account-wide maximum service boundary. The role may assume only its dedicated
+platform state-access role.
+
+The deployment role can also manage application IAM roles only below
+`/areopagus/application/`. Every application role must set
+the `areopagus_application_permissions_boundary_arn` output as its permissions
+boundary. That boundary prevents application roles from gaining IAM,
+Organizations, Identity Center, or STS permissions, even if their Terraform
+policy is broader. The deployment role cannot alter the guardrail policies or
+remove an application role's boundary.
+
+Application roles use inline policies only. The deployment role may pass only
+roles in the application role path. Keep their trust policies limited to the
+intended AWS service and use `aws:SourceAccount` and, where the service
+supports it, `aws:SourceArn` to prevent confused-deputy access.
 
 The future Areopagus workflow must still configure:
 
