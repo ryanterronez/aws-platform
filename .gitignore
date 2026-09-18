@@ -18,6 +18,7 @@ crash.*.log
 
 # Per-stack Terraform backend settings contain account-specific role ARNs.
 organization-governance/backend.hcl
+areopagus-workload-foundation/backend.hcl
 
 # Ignore override files as they are usually used to override resources locally and so
 # are not checked in

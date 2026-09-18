@@ -118,6 +118,12 @@ data "aws_iam_policy_document" "resource_perimeter" {
   statement {
     sid    = "DenyAccessOutsideOrganization"
     effect = "Deny"
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
     actions = [
       "dynamodb:*",
       "ecr:*",

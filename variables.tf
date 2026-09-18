@@ -4,6 +4,42 @@ variable "aws_region" {
   default     = "us-east-2"
 }
 
+variable "areopagus_deployment_role_name" {
+  description = "Name of the workload-account deployment role trusted by the platform state-access role."
+  type        = string
+  default     = "areopagus-github-actions-deployment"
+}
+
+variable "areopagus_plan_role_name" {
+  description = "Name of the workload-account role that GitHub Actions pull requests use for Terraform planning."
+  type        = string
+  default     = "areopagus-github-actions-plan"
+}
+
+variable "areopagus_terraform_state_key_prefix" {
+  description = "S3 key prefix to which the Areopagus state-access role is restricted."
+  type        = string
+  default     = "areopagus"
+}
+
+variable "areopagus_terraform_state_role_name" {
+  description = "Name of the platform-account role that can read and write Areopagus Terraform state."
+  type        = string
+  default     = "areopagus-terraform-state-access"
+}
+
+variable "areopagus_terraform_plan_state_role_name" {
+  description = "Name of the platform-account role that grants read-only Areopagus Terraform state access to pull requests."
+  type        = string
+  default     = "areopagus-terraform-plan-state-access"
+}
+
+variable "areopagus_workload_account_name" {
+  description = "Unique active AWS Organizations account name for the Areopagus workload."
+  type        = string
+  default     = "Areopagus"
+}
+
 variable "github_oidc_subject_repository" {
   description = "Repository prefix in the customized GitHub OIDC subject, including immutable owner and repository IDs."
   type        = string
