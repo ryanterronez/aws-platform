@@ -73,6 +73,26 @@ for this workflow unless its environment-form OIDC subject is also explicitly
 trusted; the role currently accepts only the branch subject above. Consequently,
 only workflow runs for changes merged to `main` are eligible to deploy.
 
+Same-repository pull requests use a separate, read-only planning path. The
+administrator-only workload-foundation stack creates
+`areopagus-github-actions-plan`, whose OIDC trust accepts only this immutable
+GitHub pull-request subject:
+
+```text
+repo:ryanterronez@48932656/areopagus@1373118440:pull_request
+```
+
+GitHub's `pull_request` subject is issued only for pull requests originating in
+the repository, not forks. The plan role has AWS managed `ReadOnlyAccess` in
+the workload account and can assume only
+`areopagus-terraform-plan-state-access` in the platform account. That state
+role can list and read `areopagus/*` state objects, and create/remove only the
+`.tflock` objects required by Terraform's state lock. It cannot modify or
+delete a `.tfstate` object. It cannot access `aws-platform/*`.
+
+The original `terraform-plan` role remains restricted to the `aws-platform`
+repository; it is not trusted by, or used for, Areopagus workflows.
+
 Terraform state for the application uses the `areopagus/*` key convention in
 `areopagus-terraform-state` (for example, `areopagus/terraform.tfstate` and its
 S3 lockfile). The deployment role can only assume the separate
@@ -96,6 +116,13 @@ The future Areopagus workflow must still configure:
   backend `assume_role` set to `areopagus_terraform_state_role_arn`; and
 - a trigger that runs the deployment job only after a merge to `main` (for
   example, a `push` workflow restricted to `main`).
+
+Its pull-request plan workflow must instead use the
+`areopagus_terraform_plan_role_arn` output with
+`aws-actions/configure-aws-credentials`, and set its S3 backend `assume_role`
+to `areopagus_terraform_plan_state_role_arn`. Do not pass
+`-lock=false`: the plan-state role permits the lock object while preserving
+read-only state access.
 
 No changes to the Areopagus repository are made by this stack.
 

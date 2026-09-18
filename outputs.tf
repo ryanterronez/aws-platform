@@ -27,3 +27,13 @@ output "areopagus_terraform_state_role_arn" {
   description = "Platform-account IAM role ARN that grants access only to Areopagus Terraform state."
   value       = aws_iam_role.areopagus_terraform_state.arn
 }
+
+output "areopagus_terraform_plan_role_arn" {
+  description = "Workload-account IAM role ARN for Areopagus pull requests to assume through GitHub OIDC."
+  value       = "arn:${data.aws_partition.current.partition}:iam::${local.areopagus_workload_account_id}:role/${var.areopagus_plan_role_name}"
+}
+
+output "areopagus_terraform_plan_state_role_arn" {
+  description = "Platform-account IAM role ARN that provides Areopagus pull requests read-only Terraform state access."
+  value       = aws_iam_role.areopagus_terraform_plan_state.arn
+}
