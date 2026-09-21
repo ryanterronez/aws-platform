@@ -45,7 +45,8 @@ The foundation is split along its privilege boundary:
 - **`areopagus-workload-foundation/`** is an administrator-only bootstrap stack.
   It discovers the single active Organization account named `Areopagus`, assumes
   its Organization-created `OrganizationAccountAccessRole`, and creates the
-  GitHub OIDC provider and deployment role. It has no GitHub Actions workflow.
+  GitHub OIDC provider, deployment role, and local Terraform role. It has no
+  GitHub Actions workflow.
 
 The administrator-only stack must use its own local ignored backend
 configuration at `areopagus-workload-foundation/backend.hcl`. Store its state
@@ -59,6 +60,12 @@ account name is intentionally changed.
 `OrganizationAccountAccessRole` has administrative permissions and is usable
 only by the administrator bootstrap stack. GitHub Actions never trusts or
 assumes it.
+
+For ongoing human-operated Terraform, use the
+`areopagus_local_terraform_role_arn` output. The role is assumable only by a
+management-account AWS IAM Identity Center `AdministratorAccess` session. It
+reuses `AreopagusTerraformApplicationDeployment` and can assume the dedicated
+Areopagus Terraform state-access role; it does not have `AdministratorAccess`.
 
 The deployment role trusts exactly this customized immutable GitHub subject and
 the `sts.amazonaws.com` audience:

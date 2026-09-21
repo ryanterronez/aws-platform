@@ -128,6 +128,40 @@ resource "aws_iam_role_policy_attachment" "deployment_access" {
   policy_arn = aws_iam_policy.deployment_access.arn
 }
 
+data "aws_iam_policy_document" "local_terraform_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:${data.aws_partition.current.partition}:iam::${data.aws_organizations_organization.current.master_account_id}:root"]
+    }
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:PrincipalArn"
+      values = [
+        "arn:${data.aws_partition.current.partition}:iam::${data.aws_organizations_organization.current.master_account_id}:role/aws-reserved/sso.amazonaws.com/*AWSReservedSSO_AdministratorAccess_*",
+      ]
+    }
+  }
+}
+
+resource "aws_iam_role" "local_terraform" {
+  provider           = aws.areopagus_workload
+  name               = "areopagus-local-terraform"
+  assume_role_policy = data.aws_iam_policy_document.local_terraform_assume_role.json
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "local_terraform_deployment_access" {
+  provider   = aws.areopagus_workload
+  role       = aws_iam_role.local_terraform.name
+  policy_arn = aws_iam_policy.deployment_access.arn
+}
+
 data "aws_iam_policy_document" "deployment_assume_state" {
   statement {
     effect  = "Allow"
@@ -142,6 +176,13 @@ resource "aws_iam_role_policy" "deployment_assume_state" {
   provider = aws.areopagus_workload
   name     = "assume-areopagus-terraform-state-role"
   role     = aws_iam_role.deployment.id
+  policy   = data.aws_iam_policy_document.deployment_assume_state.json
+}
+
+resource "aws_iam_role_policy" "local_terraform_assume_state" {
+  provider = aws.areopagus_workload
+  name     = "assume-areopagus-terraform-state-role"
+  role     = aws_iam_role.local_terraform.id
   policy   = data.aws_iam_policy_document.deployment_assume_state.json
 }
 

@@ -8,6 +8,11 @@ output "areopagus_deployment_role_arn" {
   value       = aws_iam_role.deployment.arn
 }
 
+output "areopagus_local_terraform_role_arn" {
+  description = "Workload-account IAM role ARN for local Terraform use by management-account administrators."
+  value       = aws_iam_role.local_terraform.arn
+}
+
 output "areopagus_plan_role_arn" {
   description = "Workload-account IAM role ARN for Areopagus pull requests to assume through GitHub OIDC."
   value       = aws_iam_role.plan.arn
