@@ -5,3 +5,16 @@ provider "aws" {
     tags = var.tags
   }
 }
+
+provider "aws" {
+  alias  = "areopagus_workload"
+  region = var.aws_region
+
+  assume_role {
+    role_arn = "arn:${data.aws_partition.current.partition}:iam::${local.areopagus_workload_account_id}:role/${var.areopagus_workload_bootstrap_role_name}"
+  }
+
+  default_tags {
+    tags = var.tags
+  }
+}
