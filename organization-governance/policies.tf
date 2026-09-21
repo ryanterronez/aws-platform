@@ -79,6 +79,7 @@ data "aws_iam_policy_document" "service_allowlist" {
       "lambda:*",
       "logs:*",
       "organizations:*",
+      "resource-explorer-2:*",
       "s3:*",
       "secretsmanager:*",
       "securityhub:*",
