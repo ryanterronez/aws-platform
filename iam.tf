@@ -2,13 +2,6 @@ data "aws_caller_identity" "current" {}
 
 data "aws_partition" "current" {}
 
-resource "aws_iam_role" "github_actions" {
-  name               = var.github_actions_role_name
-  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
-
-  tags = var.tags
-}
-
 resource "aws_iam_role" "terraform_plan" {
   name               = "terraform-plan"
   assume_role_policy = data.aws_iam_policy_document.terraform_plan_assume_role.json
@@ -43,7 +36,6 @@ data "aws_iam_policy_document" "terraform_state_assume_role" {
     principals {
       type = "AWS"
       identifiers = [
-        aws_iam_role.github_actions.arn,
         aws_iam_role.terraform_plan.arn,
       ]
     }
@@ -78,7 +70,7 @@ resource "aws_iam_role" "terraform_state" {
 }
 
 data "aws_iam_policy_document" "terraform_state_access" {
-  # Keep governance state inaccessible to workload CI.
+  # Prevent platform CI from reading or modifying governance state.
   statement {
     sid       = "DenyGovernanceStateAccess"
     effect    = "Deny"
@@ -115,18 +107,4 @@ resource "aws_iam_role_policy" "terraform_state_access" {
   name   = "terraform-state-s3-access"
   role   = aws_iam_role.terraform_state.id
   policy = data.aws_iam_policy_document.terraform_state_access.json
-}
-
-data "aws_iam_policy_document" "github_actions_assume_terraform_state" {
-  statement {
-    effect    = "Allow"
-    actions   = ["sts:AssumeRole"]
-    resources = [aws_iam_role.terraform_state.arn]
-  }
-}
-
-resource "aws_iam_role_policy" "github_actions_assume_terraform_state" {
-  name   = "assume-terraform-state-role"
-  role   = aws_iam_role.github_actions.id
-  policy = data.aws_iam_policy_document.github_actions_assume_terraform_state.json
 }

@@ -1,8 +1,3 @@
-output "github_actions_role_arn" {
-  description = "IAM role ARN for GitHub Actions to assume through OIDC."
-  value       = aws_iam_role.github_actions.arn
-}
-
 output "areopagus_deployment_role_arn" {
   description = "Workload-account IAM role ARN for Areopagus GitHub Actions to assume through OIDC."
   value       = local.areopagus_deployment_role_arn
@@ -30,7 +25,7 @@ output "areopagus_terraform_state_role_arn" {
 
 output "areopagus_terraform_plan_role_arn" {
   description = "Workload-account IAM role ARN for Areopagus pull requests to assume through GitHub OIDC."
-  value       = "arn:${data.aws_partition.current.partition}:iam::${local.areopagus_workload_account_id}:role/${var.areopagus_plan_role_name}"
+  value       = local.areopagus_plan_role_arn
 }
 
 output "areopagus_terraform_plan_state_role_arn" {

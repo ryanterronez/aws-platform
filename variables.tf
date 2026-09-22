@@ -45,12 +45,6 @@ variable "github_oidc_subject_repository" {
   }
 }
 
-variable "github_actions_role_name" {
-  description = "Name of the IAM role assumed by GitHub Actions."
-  type        = string
-  default     = "github-actions-oidc"
-}
-
 variable "terraform_state_bucket_name" {
   description = "Globally unique name of the S3 bucket that stores Terraform state."
   type        = string

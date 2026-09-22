@@ -10,7 +10,7 @@ variable "workload_account_email" {
 }
 
 variable "existing_account_departure_protection_policy_id" {
-  description = "Equivalent SCP already effective; null creates our own."
+  description = "Non-null indicates an equivalent account-departure-protection SCP is already effective; null creates and attaches this stack's policy."
   type        = string
   default     = null
 }
