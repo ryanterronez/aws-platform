@@ -1,3 +1,21 @@
+terraform {
+  required_version = ">= 1.16.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.64.0, < 7.0.0"
+    }
+  }
+
+  backend "s3" {
+    bucket       = "areopagus-terraform-state"
+    key          = "aws-platform/organization-governance/terraform.tfstate"
+    region       = "us-east-2"
+    use_lockfile = true
+  }
+}
+
 provider "aws" {
   region = "us-east-2"
 }

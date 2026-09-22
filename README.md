@@ -20,13 +20,12 @@ and Organization policies are protected from destruction.
 Apply changes to the platform root using the same administrator session:
 
 For the governance stack, set `workload_account_email` in local
-`terraform.tfvars` (never commit it), then configure its backend from
-the local ignored `organization-governance/backend.hcl`. Enable the SCP, S3,
-and RCP policy types before its first apply.
+`terraform.tfvars` (never commit it). Enable the SCP, S3, and RCP policy types
+before its first apply.
 
 ```cmd
 set AWS_PROFILE=admin
-terraform -chdir=organization-governance init -reconfigure -backend-config=backend.hcl
+terraform -chdir=organization-governance init
 terraform -chdir=organization-governance plan
 terraform -chdir=organization-governance apply
 ```
