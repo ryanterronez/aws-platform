@@ -5,3 +5,7 @@ provider "aws" {
     tags = var.tags
   }
 }
+
+provider "github" {
+  owner = "ryanterronez"
+}
