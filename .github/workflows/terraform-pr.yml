@@ -47,12 +47,6 @@ jobs:
         with:
           terraform_version: 1.16.0
 
-      - name: Report Terraform formatting issues
-        run: |
-          if ! terraform fmt -check; then
-            echo "::warning::Terraform formatting is needed. Run 'terraform fmt -recursive' locally."
-          fi
-
       - name: Authenticate to AWS
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
@@ -68,3 +62,12 @@ jobs:
 
       - name: Create Terraform plan
         run: terraform plan -input=false
+
+      # This administrator-only bootstrap root assumes OrganizationAccountAccessRole.
+      # The PR role intentionally cannot assume that role, so CI validates its
+      # configuration without obtaining workload-account administrator access.
+      - name: Initialize workload foundation for validation
+        run: terraform -chdir=areopagus-workload-foundation init -backend=false -input=false
+
+      - name: Validate workload foundation configuration
+        run: terraform -chdir=areopagus-workload-foundation validate

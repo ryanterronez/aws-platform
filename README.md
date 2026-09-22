@@ -14,7 +14,7 @@ The foundation discovers the one active Organization account named `Areopagus`, 
 
 It creates one GitHub Actions OIDC provider and two workload-account roles:
 
-- `areopagus-github-actions-deployment` trusts only the approved immutable Areopagus `main`-branch OIDC subject. It can manage only the approved Areopagus application boundary: S3, Transcribe, DynamoDB, Lambda, API Gateway, CloudWatch Logs, Secrets Manager, and bounded application IAM.
+- `areopagus-github-actions-deployment` trusts only the approved immutable Areopagus `main`-branch OIDC subject. It can manage only the approved Areopagus application boundary: S3, Transcribe, DynamoDB, Lambda, API Gateway, EventBridge, CloudWatch Logs, Secrets Manager, and bounded application IAM.
 - `areopagus-github-actions-plan` trusts only the approved immutable same-repository pull-request OIDC subject. It has read-only discovery access within the same service boundary.
 
 GitHub Actions never trusts or assumes `OrganizationAccountAccessRole`. Pull requests never receive deployment permissions.
