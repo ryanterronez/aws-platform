@@ -1,147 +1,54 @@
 # AWS Platform
 
-This repository has two independent Terraform stacks in `us-east-2`.
+This repository owns minimal shared AWS organization, governance, Terraform-state, and CI bootstrap infrastructure. It does not own Areopagus application resources.
 
-- **Root (`./`) — platform bootstrap.** Creates and hardens the
-  `areopagus-terraform-state` S3 backend; GitHub Actions OIDC provider and
-  roles; and the `terraform-state-access` role. Bootstrap state is stored at
-  `aws-platform/terraform.tfstate`. Pull requests assume the read-only
-  `terraform-plan` role and cannot apply bootstrap changes.
-- **`organization-governance/` — organization governance.** Must run with an
-  AWS Organizations management-account administrator. It creates the
-  `Workloads` OU and the Areopagus workload account, then attaches
-  account-departure and IAM identity-guardrail SCPs, a resource-perimeter RCP,
-  and an S3 declarative policy. Its
-  state is intentionally inaccessible to normal platform CI.
+## Stacks
 
-The Organization stack enforces management-account execution. Accounts, OUs,
-and Organization policies are protected from destruction.
+- **Root (`./`)** creates and hardens the shared `areopagus-terraform-state` bucket and platform CI/state access. Bootstrap state uses `aws-platform/terraform.tfstate`.
+- **`organization-governance/`** creates the `Workloads` OU and the Areopagus workload account and applies organization guardrails. Its state is intentionally unavailable to normal platform CI.
+- **`areopagus-workload-foundation/`** is an administrator-only bootstrap stack for the Areopagus workload account.
 
-Apply changes to the platform root using the same administrator session:
+## Areopagus workload foundation
 
-For the governance stack, set `workload_account_email` in local
-`terraform.tfvars` (never commit it). Enable the SCP, S3, and RCP policy types
-before its first apply.
+The foundation discovers the one active Organization account named `Areopagus`, assumes only its Organization-created `OrganizationAccountAccessRole`, and creates no application resources.
 
-```cmd
-set AWS_PROFILE=admin
-terraform -chdir=organization-governance init
-terraform -chdir=organization-governance plan
-terraform -chdir=organization-governance apply
-```
+It creates one GitHub Actions OIDC provider and two workload-account roles:
 
-Normal platform CI cannot access governance state.
+- `areopagus-github-actions-deployment` trusts only the approved immutable Areopagus `main`-branch OIDC subject. It can manage only the approved Areopagus application boundary: S3, Transcribe, DynamoDB, Lambda, API Gateway, EventBridge, CloudWatch Logs, Secrets Manager, and bounded application IAM.
+- `areopagus-github-actions-plan` trusts only the approved immutable same-repository pull-request OIDC subject. It has read-only discovery access within the same service boundary.
 
-## Areopagus workload deployment foundation
+GitHub Actions never trusts or assumes `OrganizationAccountAccessRole`. Pull requests never receive deployment permissions.
 
-The foundation is split along its privilege boundary:
+Application IAM roles must be below `/areopagus/application/` and use the `AreopagusApplicationPermissionsBoundary` output. Deployment credentials can create and manage only roles below that path, must require the boundary at creation, and can pass only those roles. They cannot alter the boundary.
 
-- **Root (`./`)** creates `areopagus-terraform-state-access` in the platform
-  account. The ordinary pull-request plan workflow runs only against this root
-  stack and never assumes a workload-account administrator role.
-- **`areopagus-workload-foundation/`** is an administrator-only bootstrap stack.
-  It discovers the single active Organization account named `Areopagus`, assumes
-  its Organization-created `OrganizationAccountAccessRole`, and creates the
-  GitHub OIDC provider, deployment role, and local Terraform role. It has no
-  GitHub Actions workflow.
+Application resources use the `areopagus-*` boundary and application secrets use `areopagus/*`. Where an AWS API supports resource ARNs or resource-account conditions, the policies scope permissions accordingly. APIs that only support `Resource = "*"` are limited to the approved service and explicit action set.
 
-The administrator-only stack must use its own local ignored backend
-configuration at `areopagus-workload-foundation/backend.hcl`. Store its state
-under an `aws-platform/` key using the existing `terraform-state-access` role.
-Apply it first so its deployment role exists, then apply the root stack to
-create the state role that trusts it. The lookup fails safely if no active
-account, or more than one active account, has the name `Areopagus`. Change the
-same account-name variable in both stacks only if the governance workload
-account name is intentionally changed.
+## Areopagus Terraform state
 
-`OrganizationAccountAccessRole` has administrative permissions and is usable
-only by the administrator bootstrap stack. GitHub Actions never trusts or
-assumes it.
-
-For ongoing human-operated Terraform, use the
-`areopagus_local_terraform_role_arn` output. The role is assumable only by a
-management-account AWS IAM Identity Center `AdministratorAccess` session. It
-reuses `AreopagusTerraformApplicationDeployment` and can assume the dedicated
-Areopagus Terraform state-access role; it does not have `AdministratorAccess`.
-
-The deployment role trusts exactly this customized immutable GitHub subject and
-the `sts.amazonaws.com` audience:
+Areopagus uses exactly one Terraform state object:
 
 ```text
-repo:ryanterronez@48932656/areopagus@1373118440:ref:refs/heads/main
+areopagus/terraform.tfstate
 ```
 
-It trusts no pull requests, tags, other branches, forks, wildcard repositories,
-or mutable repository-name-only subjects. Do not configure a GitHub Environment
-for this workflow unless its environment-form OIDC subject is also explicitly
-trusted; the role currently accepts only the branch subject above. Consequently,
-only workflow runs for changes merged to `main` are eligible to deploy.
-
-Same-repository pull requests use a separate, read-only planning path. The
-administrator-only workload-foundation stack creates
-`areopagus-github-actions-plan`, whose OIDC trust accepts only this immutable
-GitHub pull-request subject:
+Its lock object is:
 
 ```text
-repo:ryanterronez@48932656/areopagus@1373118440:pull_request
+areopagus/terraform.tfstate.tflock
 ```
 
-GitHub's `pull_request` subject is issued only for pull requests originating in
-the repository, not forks. The plan role has AWS managed `ReadOnlyAccess` in
-the workload account and can assume only
-`areopagus-terraform-plan-state-access` in the platform account. That state
-role can list and read `areopagus/*` state objects, and create/remove only the
-`.tflock` objects required by Terraform's state lock. It cannot modify or
-delete a `.tfstate` object. It cannot access `aws-platform/*`.
+The shared platform state-bucket policy directly authorizes the two exact GitHub workload roles; Terraform does not assume a separate platform state role.
 
-The original `terraform-plan` role remains restricted to the `aws-platform`
-repository; it is not trusted by, or used for, Areopagus workflows.
+- The deployment role can list the exact key, get and put the state object, and get/put/delete its lock object.
+- The plan role can list the exact key, get the state object, and get/put/delete its lock object.
+- No Areopagus role can delete the state object or access another Terraform state object in the bucket.
 
-Terraform state for the application uses the `areopagus/*` key convention in
-`areopagus-terraform-state` (for example, `areopagus/terraform.tfstate` and its
-S3 lockfile). The deployment role can only assume the separate
-`areopagus-terraform-state-access` role; that role can list and read/write only
-the `areopagus/*` prefix. It has no access to `aws-platform/*`, including the
-governance prefix. Bucket encryption, versioning, public-access blocking,
-lockfile permissions, and the deny-insecure-transport policy remain shared
-controls managed by this stack.
+The state bucket retains shared versioning, SSE-S3 encryption, public-access blocking, bucket-owner-enforced ownership, and an explicit deny for insecure transport.
 
-The deployment role's customer-managed policy intentionally excludes IAM,
-Organizations, IAM Identity Center, and unrestricted STS. The role may assume
-only its dedicated platform state-access role.
+The Areopagus repository configures the S3 backend with the bucket, region, and exact key outputs. It does **not** configure a backend `assume_role`. Its GitHub workflows require `id-token: write` and `contents: read`; the main deployment workflow assumes the deployment role and the pull-request workflow assumes the plan role. Do not use `-lock=false`.
 
-The deployment role can also manage application IAM roles only below
-`/areopagus/application/`. Every application role must set
-the `areopagus_application_permissions_boundary_arn` output as its permissions
-boundary. That boundary prevents application roles from gaining IAM,
-Organizations, Identity Center, or STS permissions, even if their Terraform
-policy is broader. The deployment role cannot alter the guardrail policies or
-remove an application role's boundary.
+The workload-foundation stack has an empty S3 backend declaration. Use its ignored local `backend.hcl` with the existing platform `terraform-state-access` role for administrator bootstrap state; this role is unrelated to Areopagus application state access.
 
-Application roles use inline policies only. The deployment role may pass only
-roles in the application role path. Keep their trust policies limited to the
-intended AWS service and use `aws:SourceAccount` and, where the service
-supports it, `aws:SourceArn` to prevent confused-deputy access.
+## Local administration
 
-The future Areopagus workflow must still configure:
-
-- `permissions: id-token: write` and `contents: read`;
-- `aws-actions/configure-aws-credentials` with the
-  `areopagus_deployment_role_arn` output and `us-east-2`;
-- the S3 backend bucket/key/region from the Areopagus state outputs, with its
-  backend `assume_role` set to `areopagus_terraform_state_role_arn`; and
-- a trigger that runs the deployment job only after a merge to `main` (for
-  example, a `push` workflow restricted to `main`).
-
-Its pull-request plan workflow must instead use the
-`areopagus_terraform_plan_role_arn` output with
-`aws-actions/configure-aws-credentials`, and set its S3 backend `assume_role`
-to `areopagus_terraform_plan_state_role_arn`. Do not pass
-`-lock=false`: the plan-state role permits the lock object while preserving
-read-only state access.
-
-No changes to the Areopagus repository are made by this stack.
-
-aws sso login --profile admin
-
-set AWS_PROFILE=admin
+Ryan uses existing IAM Identity Center administrator credentials directly for local Terraform, S3 uploads, Transcribe operations, and other manual Areopagus administration. This foundation creates no additional human-access role or local state-access mechanism.
