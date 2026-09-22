@@ -7,9 +7,8 @@ resource "aws_iam_role" "deployment" {
 }
 
 data "aws_iam_policy_document" "application_boundary" {
-  # The Workloads SCP is the authoritative service allowlist. This boundary
-  # prevents application roles from becoming IAM, Organizations, Identity
-  # Center, or STS administrators within that account-level limit.
+  # Prevent application roles from becoming IAM, Organizations, Identity
+  # Center, or STS administrators.
   statement {
     effect = "Allow"
     not_actions = [
@@ -41,9 +40,8 @@ resource "aws_iam_policy" "application_boundary" {
 }
 
 data "aws_iam_policy_document" "deployment_access" {
-  # SCPs constrain this broad application-service allow to the Workloads
-  # service allowlist. Identity, Organization, and arbitrary STS access are
-  # granted only by the following narrowly scoped statements.
+  # Identity, Organization, and arbitrary STS access are granted only by the
+  # following narrowly scoped statements.
   statement {
     effect = "Allow"
     not_actions = [

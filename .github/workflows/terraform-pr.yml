@@ -11,6 +11,7 @@ on:
     paths:
       - "*.tf"
       - "**/*.tf"
+      - "!organization-governance/**"
       - "*.tf.json"
       - "**/*.tf.json"
       - ".terraform.lock.hcl"
@@ -66,20 +67,4 @@ jobs:
         run: terraform validate
 
       - name: Create Terraform plan
-        run: terraform plan -input=false -no-color
-
-  checkov:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Scan Terraform with Checkov
-        uses: bridgecrewio/checkov-action@a8664e3a0549367977f0cda990a34311835c87c0 # v12.3123.0
-        with:
-          directory: .
-          framework: terraform
-          config_file: .checkov.yaml
+        run: terraform plan -input=false

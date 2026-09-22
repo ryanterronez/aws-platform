@@ -10,8 +10,8 @@ This repository has two independent Terraform stacks in `us-east-2`.
 - **`organization-governance/` — organization governance.** Must run with an
   AWS Organizations management-account administrator. It creates the
   `Workloads` OU and the Areopagus workload account, then attaches
-  the baseline service-allowlist, account-departure, and IAM identity guardrail
-  SCPs; a resource-perimeter RCP; and EC2 and S3 declarative policies. Its
+  account-departure and IAM identity-guardrail SCPs, a resource-perimeter RCP,
+  and an S3 declarative policy. Its
   state is intentionally inaccessible to normal platform CI.
 
 The Organization stack enforces management-account execution. Accounts, OUs,
@@ -21,10 +21,8 @@ Apply changes to the platform root using the same administrator session:
 
 For the governance stack, set `workload_account_email` in local
 `terraform.tfvars` (never commit it), then configure its backend from
-the local ignored `organization-governance/backend.hcl`. Enable the SCP, EC2
-declarative, S3, and RCP policy types before its first apply. Set
-`existing_account_departure_protection_policy_id` only when equivalent
-departure protection is already effective.
+the local ignored `organization-governance/backend.hcl`. Enable the SCP, S3,
+and RCP policy types before its first apply.
 
 ```cmd
 set AWS_PROFILE=admin
@@ -109,11 +107,9 @@ governance prefix. Bucket encryption, versioning, public-access blocking,
 lockfile permissions, and the deny-insecure-transport policy remain shared
 controls managed by this stack.
 
-The deployment role can manage application resources permitted by the Workloads
-SCP service allowlist. Its customer-managed policy intentionally excludes IAM,
-Organizations, IAM Identity Center, and unrestricted STS; the SCP remains the
-account-wide maximum service boundary. The role may assume only its dedicated
-platform state-access role.
+The deployment role's customer-managed policy intentionally excludes IAM,
+Organizations, IAM Identity Center, and unrestricted STS. The role may assume
+only its dedicated platform state-access role.
 
 The deployment role can also manage application IAM roles only below
 `/areopagus/application/`. Every application role must set
