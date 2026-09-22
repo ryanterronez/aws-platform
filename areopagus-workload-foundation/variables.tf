@@ -10,22 +10,16 @@ variable "areopagus_github_oidc_subject" {
   default     = "repo:ryanterronez@48932656/areopagus@1373118440:ref:refs/heads/main"
 }
 
-variable "areopagus_terraform_state_role_name" {
-  description = "Name of the platform-account role that grants access only to Areopagus Terraform state."
-  type        = string
-  default     = "areopagus-terraform-state-access"
-}
-
 variable "areopagus_plan_role_name" {
   description = "Name of the workload-account IAM role assumed by Areopagus pull requests."
   type        = string
   default     = "areopagus-github-actions-plan"
 }
 
-variable "areopagus_terraform_plan_state_role_name" {
-  description = "Name of the platform-account role that grants Areopagus pull requests read-only Terraform state access."
+variable "areopagus_terraform_state_key" {
+  description = "Exact S3 object key for the single Areopagus Terraform state file."
   type        = string
-  default     = "areopagus-terraform-plan-state-access"
+  default     = "areopagus/terraform.tfstate"
 }
 
 variable "areopagus_workload_account_name" {
@@ -50,4 +44,10 @@ variable "tags" {
   description = "Tags applied to supported AWS resources."
   type        = map(string)
   default     = {}
+}
+
+variable "terraform_state_bucket_name" {
+  description = "Name of the shared platform S3 bucket that stores Terraform state."
+  type        = string
+  default     = "areopagus-terraform-state"
 }

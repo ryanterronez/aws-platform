@@ -1,3 +1,11 @@
+data "aws_organizations_organization" "current" {}
+
+data "aws_partition" "current" {}
+
+terraform {
+  backend "s3" {}
+}
+
 provider "aws" {
   region = var.aws_region
 
