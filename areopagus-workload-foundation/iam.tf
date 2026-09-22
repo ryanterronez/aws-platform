@@ -2,7 +2,6 @@ resource "aws_iam_role" "deployment" {
   provider           = aws.areopagus_workload
   name               = "areopagus-github-actions-deployment"
   assume_role_policy = data.aws_iam_policy_document.github_actions_assume_deployment.json
-  tags               = var.tags
 }
 
 data "aws_iam_policy_document" "application_boundary" {
@@ -27,7 +26,6 @@ resource "aws_iam_policy" "application_boundary" {
     prevent_destroy = true
   }
 
-  tags = var.tags
 }
 
 data "aws_iam_policy_document" "deployment_access" {
@@ -50,33 +48,33 @@ data "aws_iam_policy_document" "deployment_access" {
     sid       = "ManageApplicationDynamoDb"
     actions   = ["dynamodb:*"]
     resources = [
-      "arn:${data.aws_partition.current.partition}:dynamodb:${var.aws_region}:${local.areopagus_workload_account_id}:table/areopagus-*",
-      "arn:${data.aws_partition.current.partition}:dynamodb:${var.aws_region}:${local.areopagus_workload_account_id}:table/areopagus-*/index/*",
+      "arn:${data.aws_partition.current.partition}:dynamodb:us-east-2:${local.areopagus_workload_account_id}:table/areopagus-*",
+      "arn:${data.aws_partition.current.partition}:dynamodb:us-east-2:${local.areopagus_workload_account_id}:table/areopagus-*/index/*",
     ]
   }
 
   statement {
     sid       = "ManageApplicationLambda"
     actions   = ["lambda:*"]
-    resources = ["arn:${data.aws_partition.current.partition}:lambda:${var.aws_region}:${local.areopagus_workload_account_id}:function:areopagus-*"]
+    resources = ["arn:${data.aws_partition.current.partition}:lambda:us-east-2:${local.areopagus_workload_account_id}:function:areopagus-*"]
   }
 
   statement {
     sid       = "ManageApplicationLogs"
     actions   = ["logs:*"]
-    resources = ["arn:${data.aws_partition.current.partition}:logs:${var.aws_region}:${local.areopagus_workload_account_id}:log-group:/aws/lambda/areopagus-*:*" ]
+    resources = ["arn:${data.aws_partition.current.partition}:logs:us-east-2:${local.areopagus_workload_account_id}:log-group:/aws/lambda/areopagus-*:*"]
   }
 
   statement {
     sid       = "ManageApplicationSecrets"
     actions   = ["secretsmanager:*"]
-    resources = ["arn:${data.aws_partition.current.partition}:secretsmanager:${var.aws_region}:${local.areopagus_workload_account_id}:secret:areopagus/*"]
+    resources = ["arn:${data.aws_partition.current.partition}:secretsmanager:us-east-2:${local.areopagus_workload_account_id}:secret:areopagus/*"]
   }
 
   statement {
     sid       = "ManageApplicationEventBridge"
     actions   = ["events:*"]
-    resources = ["arn:${data.aws_partition.current.partition}:events:${var.aws_region}:${local.areopagus_workload_account_id}:*/*areopagus-*"]
+    resources = ["arn:${data.aws_partition.current.partition}:events:us-east-2:${local.areopagus_workload_account_id}:*/*areopagus-*"]
   }
 
   # These service APIs do not offer sufficiently useful resource-level IAM
@@ -134,25 +132,25 @@ data "aws_iam_policy_document" "deployment_access" {
   statement {
     sid       = "ListTerraformState"
     actions   = ["s3:ListBucket"]
-    resources = ["arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket_name}"]
+    resources = ["arn:${data.aws_partition.current.partition}:s3:::areopagus-terraform-state"]
 
     condition {
       test     = "StringEquals"
       variable = "s3:prefix"
-      values   = [var.areopagus_terraform_state_key, "${var.areopagus_terraform_state_key}.tflock"]
+      values   = ["areopagus/terraform.tfstate", "areopagus/terraform.tfstate.tflock"]
     }
   }
 
   statement {
     sid       = "ReadWriteTerraformState"
     actions   = ["s3:GetObject", "s3:PutObject"]
-    resources = ["arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket_name}/${var.areopagus_terraform_state_key}"]
+    resources = ["arn:${data.aws_partition.current.partition}:s3:::areopagus-terraform-state/areopagus/terraform.tfstate"]
   }
 
   statement {
     sid       = "ManageTerraformLock"
     actions   = ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"]
-    resources = ["arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket_name}/${var.areopagus_terraform_state_key}.tflock"]
+    resources = ["arn:${data.aws_partition.current.partition}:s3:::areopagus-terraform-state/areopagus/terraform.tfstate.tflock"]
   }
 }
 
@@ -162,7 +160,6 @@ resource "aws_iam_policy" "deployment_access" {
   path        = "/areopagus/guardrails/"
   description = "Areopagus application infrastructure and direct Terraform state access."
   policy      = data.aws_iam_policy_document.deployment_access.json
-  tags        = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "deployment_access" {
@@ -190,16 +187,15 @@ data "aws_iam_policy_document" "github_actions_assume_plan" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = [var.areopagus_github_oidc_plan_subject]
+      values   = ["repo:ryanterronez@48932656/areopagus@1373118440:pull_request"]
     }
   }
 }
 
 resource "aws_iam_role" "plan" {
   provider           = aws.areopagus_workload
-  name               = var.areopagus_plan_role_name
+  name               = "areopagus-github-actions-plan"
   assume_role_policy = data.aws_iam_policy_document.github_actions_assume_plan.json
-  tags               = var.tags
 }
 
 data "aws_iam_policy_document" "plan_access" {
@@ -222,33 +218,33 @@ data "aws_iam_policy_document" "plan_access" {
     sid       = "ReadApplicationDynamoDb"
     actions   = ["dynamodb:Describe*", "dynamodb:List*"]
     resources = [
-      "arn:${data.aws_partition.current.partition}:dynamodb:${var.aws_region}:${local.areopagus_workload_account_id}:table/areopagus-*",
-      "arn:${data.aws_partition.current.partition}:dynamodb:${var.aws_region}:${local.areopagus_workload_account_id}:table/areopagus-*/index/*",
+      "arn:${data.aws_partition.current.partition}:dynamodb:us-east-2:${local.areopagus_workload_account_id}:table/areopagus-*",
+      "arn:${data.aws_partition.current.partition}:dynamodb:us-east-2:${local.areopagus_workload_account_id}:table/areopagus-*/index/*",
     ]
   }
 
   statement {
     sid       = "ReadApplicationLambda"
     actions   = ["lambda:Get*", "lambda:List*"]
-    resources = ["arn:${data.aws_partition.current.partition}:lambda:${var.aws_region}:${local.areopagus_workload_account_id}:function:areopagus-*"]
+    resources = ["arn:${data.aws_partition.current.partition}:lambda:us-east-2:${local.areopagus_workload_account_id}:function:areopagus-*"]
   }
 
   statement {
     sid       = "ReadApplicationLogs"
     actions   = ["logs:Describe*", "logs:List*"]
-    resources = ["arn:${data.aws_partition.current.partition}:logs:${var.aws_region}:${local.areopagus_workload_account_id}:log-group:/aws/lambda/areopagus-*:*" ]
+    resources = ["arn:${data.aws_partition.current.partition}:logs:us-east-2:${local.areopagus_workload_account_id}:log-group:/aws/lambda/areopagus-*:*"]
   }
 
   statement {
     sid       = "ReadApplicationSecrets"
     actions   = ["secretsmanager:Describe*", "secretsmanager:List*"]
-    resources = ["arn:${data.aws_partition.current.partition}:secretsmanager:${var.aws_region}:${local.areopagus_workload_account_id}:secret:areopagus/*"]
+    resources = ["arn:${data.aws_partition.current.partition}:secretsmanager:us-east-2:${local.areopagus_workload_account_id}:secret:areopagus/*"]
   }
 
   statement {
     sid       = "ReadApplicationEventBridge"
     actions   = ["events:Describe*", "events:List*"]
-    resources = ["arn:${data.aws_partition.current.partition}:events:${var.aws_region}:${local.areopagus_workload_account_id}:*/*areopagus-*"]
+    resources = ["arn:${data.aws_partition.current.partition}:events:us-east-2:${local.areopagus_workload_account_id}:*/*areopagus-*"]
   }
 
   statement {
@@ -281,25 +277,25 @@ data "aws_iam_policy_document" "plan_access" {
   statement {
     sid       = "ListTerraformState"
     actions   = ["s3:ListBucket"]
-    resources = ["arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket_name}"]
+    resources = ["arn:${data.aws_partition.current.partition}:s3:::areopagus-terraform-state"]
 
     condition {
       test     = "StringEquals"
       variable = "s3:prefix"
-      values   = [var.areopagus_terraform_state_key, "${var.areopagus_terraform_state_key}.tflock"]
+      values   = ["areopagus/terraform.tfstate", "areopagus/terraform.tfstate.tflock"]
     }
   }
 
   statement {
     sid       = "ReadTerraformState"
     actions   = ["s3:GetObject"]
-    resources = ["arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket_name}/${var.areopagus_terraform_state_key}"]
+    resources = ["arn:${data.aws_partition.current.partition}:s3:::areopagus-terraform-state/areopagus/terraform.tfstate"]
   }
 
   statement {
     sid       = "ManageTerraformLock"
     actions   = ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"]
-    resources = ["arn:${data.aws_partition.current.partition}:s3:::${var.terraform_state_bucket_name}/${var.areopagus_terraform_state_key}.tflock"]
+    resources = ["arn:${data.aws_partition.current.partition}:s3:::areopagus-terraform-state/areopagus/terraform.tfstate.tflock"]
   }
 }
 
@@ -309,7 +305,6 @@ resource "aws_iam_policy" "plan_access" {
   path        = "/areopagus/guardrails/"
   description = "Read-only Areopagus discovery and Terraform state access for pull-request plans."
   policy      = data.aws_iam_policy_document.plan_access.json
-  tags        = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "plan_access" {

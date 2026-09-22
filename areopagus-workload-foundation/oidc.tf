@@ -23,7 +23,7 @@ data "aws_iam_policy_document" "github_actions_assume_deployment" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = [var.areopagus_github_oidc_subject]
+      values   = ["repo:ryanterronez@48932656/areopagus@1373118440:ref:refs/heads/main"]
     }
   }
 }
