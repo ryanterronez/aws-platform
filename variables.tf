@@ -4,12 +4,6 @@ variable "aws_region" {
   default     = "us-east-2"
 }
 
-variable "areopagus_deployment_role_name" {
-  description = "Name of the workload-account deployment role trusted by the platform state-access role."
-  type        = string
-  default     = "areopagus-github-actions-deployment"
-}
-
 variable "areopagus_plan_role_name" {
   description = "Name of the workload-account role that GitHub Actions pull requests use for Terraform planning."
   type        = string

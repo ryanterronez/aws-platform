@@ -1,6 +1,6 @@
 resource "aws_iam_role" "deployment" {
   provider           = aws.areopagus_workload
-  name               = var.areopagus_deployment_role_name
+  name               = "areopagus-github-actions-deployment"
   assume_role_policy = data.aws_iam_policy_document.github_actions_assume_deployment.json
 
   tags = var.tags
@@ -75,6 +75,8 @@ data "aws_iam_policy_document" "deployment_access" {
       "iam:ListRoleTags",
       "iam:UpdateAssumeRolePolicy",
       "iam:UpdateRole",
+      "iam:ListAttachedRolePolicies",
+      "iam:ListInstanceProfilesForRole",
     ]
     resources = [local.application_role_arn]
   }
@@ -106,8 +108,8 @@ data "aws_iam_policy_document" "deployment_access" {
   }
 
   statement {
-    effect = "Allow"
-    actions = ["iam:PassRole"]
+    effect    = "Allow"
+    actions   = ["iam:PassRole"]
     resources = [local.application_role_arn]
   }
 }

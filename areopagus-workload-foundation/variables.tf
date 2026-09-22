@@ -1,9 +1,3 @@
-variable "areopagus_deployment_role_name" {
-  description = "Name of the workload-account IAM role assumed by Areopagus GitHub Actions."
-  type        = string
-  default     = "areopagus-github-actions-deployment"
-}
-
 variable "areopagus_github_oidc_plan_subject" {
   description = "Exact immutable GitHub OIDC subject trusted to plan Areopagus Terraform from same-repository pull requests."
   type        = string
