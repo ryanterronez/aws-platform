@@ -41,6 +41,50 @@ resource "aws_s3_bucket_ownership_controls" "terraform_state" {
 
 data "aws_iam_policy_document" "terraform_state_bucket" {
   statement {
+    sid    = "AllowAreopagusGitHubActionsStateAccess"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.areopagus_github_actions.arn]
+    }
+
+    actions = ["s3:ListBucket"]
+
+    resources = [aws_s3_bucket.terraform_state.arn]
+
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values = [
+        "areopagus/terraform.tfstate",
+        "areopagus/terraform.tfstate.tflock",
+      ]
+    }
+  }
+
+  statement {
+    sid    = "AllowAreopagusGitHubActionsStateObjectAccess"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.areopagus_github_actions.arn]
+    }
+
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+
+    resources = [
+      "${aws_s3_bucket.terraform_state.arn}/areopagus/terraform.tfstate",
+      "${aws_s3_bucket.terraform_state.arn}/areopagus/terraform.tfstate.tflock",
+    ]
+  }
+
+  statement {
     sid    = "DenyInsecureTransport"
     effect = "Deny"
 
