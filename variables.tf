@@ -4,24 +4,6 @@ variable "aws_region" {
   default     = "us-east-2"
 }
 
-variable "areopagus_plan_role_name" {
-  description = "Name of the workload-account role that GitHub Actions pull requests use for Terraform planning."
-  type        = string
-  default     = "areopagus-github-actions-plan"
-}
-
-variable "areopagus_terraform_state_key" {
-  description = "Exact S3 object key for the single Areopagus Terraform state file."
-  type        = string
-  default     = "areopagus/terraform.tfstate"
-}
-
-variable "areopagus_workload_account_name" {
-  description = "Unique active AWS Organizations account name for the Areopagus workload."
-  type        = string
-  default     = "Areopagus"
-}
-
 variable "github_oidc_subject_repository" {
   description = "Repository prefix in the customized GitHub OIDC subject, including immutable owner and repository IDs."
   type        = string

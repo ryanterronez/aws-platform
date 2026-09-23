@@ -62,69 +62,6 @@ data "aws_iam_policy_document" "terraform_state_bucket" {
       values   = ["false"]
     }
   }
-
-  statement {
-    sid = "AllowAreopagusStateList"
-
-    principals {
-      type = "AWS"
-      identifiers = [
-        local.areopagus_deployment_role_arn,
-        local.areopagus_plan_role_arn,
-      ]
-    }
-
-    actions   = ["s3:ListBucket"]
-    resources = [aws_s3_bucket.terraform_state.arn]
-
-    condition {
-      test     = "StringEquals"
-      variable = "s3:prefix"
-      values = [
-        var.areopagus_terraform_state_key,
-        "${var.areopagus_terraform_state_key}.tflock",
-      ]
-    }
-  }
-
-  statement {
-    sid = "AllowAreopagusStateReadWrite"
-
-    principals {
-      type = "AWS"
-      identifiers = [local.areopagus_deployment_role_arn]
-    }
-
-    actions   = ["s3:GetObject", "s3:PutObject"]
-    resources = ["${aws_s3_bucket.terraform_state.arn}/${var.areopagus_terraform_state_key}"]
-  }
-
-  statement {
-    sid = "AllowAreopagusPlanStateRead"
-
-    principals {
-      type        = "AWS"
-      identifiers = [local.areopagus_plan_role_arn]
-    }
-
-    actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.terraform_state.arn}/${var.areopagus_terraform_state_key}"]
-  }
-
-  statement {
-    sid = "AllowAreopagusTerraformLock"
-
-    principals {
-      type = "AWS"
-      identifiers = [
-        local.areopagus_deployment_role_arn,
-        local.areopagus_plan_role_arn,
-      ]
-    }
-
-    actions   = ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"]
-    resources = ["${aws_s3_bucket.terraform_state.arn}/${var.areopagus_terraform_state_key}.tflock"]
-  }
 }
 
 resource "aws_s3_bucket_policy" "terraform_state" {
