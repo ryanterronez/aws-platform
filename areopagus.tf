@@ -54,19 +54,7 @@ data "aws_iam_policy_document" "areopagus_github_actions" {
   statement {
     sid    = "ManageAreopagusApplicationS3"
     effect = "Allow"
-    actions = [
-      "s3:CreateBucket",
-      "s3:DeleteBucket",
-      "s3:GetBucket*",
-      "s3:ListBucket",
-      "s3:PutBucket*",
-      "s3:DeleteBucket*",
-      "s3:GetObject*",
-      "s3:ListBucketMultipartUploads",
-      "s3:PutObject*",
-      "s3:DeleteObject*",
-      "s3:AbortMultipartUpload",
-    ]
+    actions = ["s3:*"]
     resources = [
       "arn:${data.aws_partition.current.partition}:s3:::areopagus-app-*",
       "arn:${data.aws_partition.current.partition}:s3:::areopagus-app-*/*",
